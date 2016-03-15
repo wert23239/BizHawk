@@ -130,19 +130,35 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                     break;
             }
 
-            // wrap values
-            newHblankStart = WrapValue(0, maxWidth, newHblankStart);
-            newHblankEnd = WrapValue(0, maxWidth, newHblankEnd);
-	        newVblankStart = WrapValue(0, lines, newVblankStart);
-            newVblankEnd = WrapValue(0, lines, newVblankEnd);
+	        if (newHblankStart >= 0)
+	        {
+                newHblankStart = WrapValue(0, maxWidth, newHblankStart);
+                newHblankEnd = WrapValue(0, maxWidth, newHblankEnd);
+                _hblankStartCheckXRaster = newHblankStart & 0xFFC;
+	            _hblankEndCheckXRaster = newHblankEnd & 0xFFC;
+	            _bufWidth = TimingBuilder_ScreenWidth(_rasterXPipeline, newHblankStart, newHblankEnd);
+	        }
+	        else
+	        {
+	            _hblankStartCheckXRaster = -1;
+	            _hblankEndCheckXRaster = -1;
+	            _bufWidth = _rasterXPipeline.Length*4;
+	        }
 
-            // calculate output dimensions
-	        _hblankStartCheckXRaster = newHblankStart & 0xFFC;
-            _hblankEndCheckXRaster = newHblankEnd & 0xFFC;
-            _vblankStart = newVblankStart;
-	        _vblankEnd = newVblankEnd;
-            _bufWidth = TimingBuilder_ScreenWidth(_rasterXPipeline, newHblankStart, newHblankEnd);
-            _bufHeight = TimingBuilder_ScreenHeight(newVblankStart, newVblankEnd, lines);
+	        if (newVblankStart >= 0)
+	        {
+                newVblankStart = WrapValue(0, lines, newVblankStart);
+                newVblankEnd = WrapValue(0, lines, newVblankEnd);
+                _vblankStart = newVblankStart;
+                _vblankEnd = newVblankEnd;
+                _bufHeight = TimingBuilder_ScreenHeight(newVblankStart, newVblankEnd, lines);
+            }
+	        else
+	        {
+	            _vblankStart = -1;
+	            _vblankEnd = -1;
+	            _bufHeight = lines;
+	        }
             _buf = new int[_bufWidth * _bufHeight];
             _bufLength = _buf.Length;
 	        VirtualWidth = _bufWidth*_pixelRatioNum/_pixelRatioDen;

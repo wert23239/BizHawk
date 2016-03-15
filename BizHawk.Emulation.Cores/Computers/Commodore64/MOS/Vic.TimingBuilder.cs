@@ -215,7 +215,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 		// This uses the vBlank values to determine the height of the visible screen.
 	    private static int TimingBuilder_ScreenHeight(int vblankStart, int vblankEnd, int lines)
 		{
-            if (vblankStart < 0 || vblankEnd < 0)
+            if (vblankStart < 0 || vblankEnd < 0 || vblankEnd == vblankStart)
             {
                 return lines;
             }
@@ -236,7 +236,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 		// This uses the hBlank values to determine the width of the visible screen.
 	    private static int TimingBuilder_ScreenWidth(IList<int> timing, int hblankStart, int hblankEnd)
 		{
-	        if (hblankStart < 0 || hblankEnd < 0)
+	        if (hblankStart < 0 || hblankEnd < 0 || hblankStart == hblankEnd)
 	        {
 	            return timing.Count * 4;
 	        }
