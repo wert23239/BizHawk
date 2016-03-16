@@ -154,7 +154,7 @@
 					spr.YCrunch = true;
 			}
 
-            if ((_parseAct & PipelineUpdateMcBase) != 0) // VIC addendum sprite rule 7
+            if ((_parseAct & PipelineUpdateMcBase) != 0) // VIC addendum sprite rule 7 (cycle 16)
             {
                 foreach (var spr in _sprites)
                 {
@@ -169,7 +169,7 @@
                 }
             }
 
-            if ((_parseAct & PipelineSpriteDma) != 0) // sprite rule 3
+            if ((_parseAct & PipelineSpriteDma) != 0) // sprite rule 3 (start of spr0 BA + following cycle)
 			{
 				foreach (var spr in _sprites)
 				{
@@ -182,7 +182,7 @@
 				}
 			}
 
-            if ((_parseAct & PipelineSpriteExpansion) != 0) // sprite rule 2
+            if ((_parseAct & PipelineSpriteExpansion) != 0) // sprite rule 2 (0x158)
             {
                 foreach (var spr in _sprites)
                 {
@@ -191,8 +191,8 @@
                 }
             }
 
-            if ((_parseAct & PipelineSpriteDisplay) != 0) // VIC addendum on sprite rule 4
-			{
+            if ((_parseAct & PipelineSpriteDisplay) != 0) // VIC addendum on sprite rule 4 (0x164 or 0x16C)
+            {
 				foreach (var spr in _sprites)
 				{
 					spr.Mc = spr.Mcbase;
@@ -208,9 +208,9 @@
 				}
 			}
 
-		    _parseIsSprCrunch = (_parseAct & PipelineSpriteCrunch) != 0; // VIC addendum sprite rule 7
+		    _parseIsSprCrunch = (_parseAct & PipelineSpriteCrunch) != 0; // VIC addendum sprite rule 7 (cycle 16)
 
-            if ((_parseAct & PipelineUpdateVc) != 0) // VC/RC rule 2
+            if ((_parseAct & PipelineUpdateVc) != 0) // VC/RC rule 2 (cycle 14)
             {
                 _vc = _vcbase;
                 _srColorIndexLatch = 0;
