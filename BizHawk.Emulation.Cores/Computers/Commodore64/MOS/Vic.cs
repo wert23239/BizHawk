@@ -23,12 +23,12 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
               http://mail.lipsia.de/~enigma/neu/6581.html
         */
 
-        public Func<int, int> ReadColorRam;
-		public Func<int, int> ReadMemory;
+        [SaveState.DoNotSave] public Func<int, int> ReadColorRam;
+        [SaveState.DoNotSave] public Func<int, int> ReadMemory;
 
-		public bool ReadAec() { return _pinAec; }
-		public bool ReadBa() { return _pinBa; }
-		public bool ReadIrq() { return _pinIrq; }
+        [SaveState.DoNotSave] public bool ReadAec() { return _pinAec; }
+        [SaveState.DoNotSave] public bool ReadBa() { return _pinBa; }
+        [SaveState.DoNotSave] public bool ReadIrq() { return _pinIrq; }
 
 		[SaveState.DoNotSave] private readonly int _cyclesPerSec;
         [SaveState.DoNotSave] private readonly int[] _rasterXPipeline;
@@ -38,12 +38,11 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         [SaveState.DoNotSave] private readonly int _totalCycles;
 		[SaveState.DoNotSave] private readonly int _totalLines;
 
-	    private int _cyclesExecuted;
 	    [SaveState.DoNotSave] private int _hblankStartCheckXRaster;
         [SaveState.DoNotSave] private int _hblankEndCheckXRaster;
 
-	    [SaveState.DoNotSave] private int _pixelRatioNum;
-	    [SaveState.DoNotSave] private int _pixelRatioDen;
+	    [SaveState.DoNotSave] private readonly int _pixelRatioNum;
+	    [SaveState.DoNotSave] private readonly int _pixelRatioDen;
 
         public Vic(int newCycles, int newLines, IList<int[]> newPipeline, int newCyclesPerSec, int hblankStart, int hblankEnd, int vblankStart, int vblankEnd, C64.BorderType borderType, int pixelRatioNum, int pixelRatioDen)
 		{
@@ -233,7 +232,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                     _vc = 0;
                     _badlineEnable = false;
                     _refreshCounter = 0xFF;
-                    _cyclesExecuted = 0;
                 }
             }
 
@@ -332,8 +330,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 
             // must always come last
             UpdatePins();
-
-            _cyclesExecuted++;
 		}
 
 		private void UpdateBorder()

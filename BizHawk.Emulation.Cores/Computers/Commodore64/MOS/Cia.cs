@@ -27,6 +27,8 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         }
 
         public Func<bool> ReadFlag = () => true;
+        public Func<bool> ReadCnt = () => true;
+        public Func<bool> ReadSp = () => true; 
         public bool DelayedInterrupts = true;
 
         private int _pra;
@@ -60,6 +62,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         private bool _tbCntPhi2;
         private bool _tbCntTa;
         private bool _tbCntCnt;
+        private bool _tbCntTaCnt;
         private bool _taIrqNextCycle;
         private bool _taPrb6NegativeNextCycle;
         private bool _tbIrqNextCycle;
@@ -71,6 +74,8 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         private int _newCra;
         private int _newCrb;
         private bool _flagLatch;
+        private bool _lastCnt;
+        [SaveState.DoNotSave] private bool _thisCnt;
         [SaveState.DoNotSave] private bool _flagInput;
         [SaveState.DoNotSave] private bool _taUnderflow;
 
@@ -92,9 +97,9 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             _port = new JoystickKeyboardPort(joysticks, keyboard);
         }
 
-        public Cia(int todNum, int todDen, Func<int> readIec) : this(todNum, todDen)
+        public Cia(int todNum, int todDen, Func<int> readIec, Func<int> readUserPort) : this(todNum, todDen)
         {
-            _port = new IecPort(readIec);
+            _port = new IecPort(readIec, readUserPort);
         }
 
         public void HardReset()
@@ -130,6 +135,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             _tbIrqNextCycle = false;
             _taState = TimerState.Stop;
             _tbState = TimerState.Stop;
+            _lastCnt = true;
         }
 
         private void CheckIrqs()
@@ -148,6 +154,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 
         public void ExecutePhase()
         {
+            _thisCnt = ReadCnt();
             _taUnderflow = false;
             if (DelayedInterrupts)
             {
@@ -273,11 +280,13 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                 _ddra |= 0x40;
             if ((_crb & 0x02) != 0)
                 _ddrb |= 0x80;
+
+            _lastCnt = _thisCnt;
         }
 
         private void Ta_Count()
         {
-            if (_taCntPhi2)
+            if (_taCntPhi2 || (_taCntCnt && !_lastCnt && _thisCnt))
             {
                 if (_ta <= 0 || --_ta == 0)
                 {
@@ -387,7 +396,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 
         private void Tb_Count()
         {
-            if (_tbCntPhi2 || (_tbCntTa && _taUnderflow))
+            if (_tbCntPhi2 || (_tbCntTa && _taUnderflow) || (_tbCntTaCnt && _taUnderflow && _thisCnt) || (_tbCntCnt && !_lastCnt && _thisCnt))
             {
                 if (_tb <= 0 || --_tb == 0)
                 {
