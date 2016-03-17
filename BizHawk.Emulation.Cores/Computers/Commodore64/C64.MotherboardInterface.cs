@@ -25,7 +25,8 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64
 		{
             // the low bits are actually the VIC memory address.
             return (SerPort_ReadDataOut() && Serial.ReadDeviceData() ? 0x80 : 0x00) |
-                   (SerPort_ReadClockOut() && Serial.ReadDeviceClock() ? 0x40 : 0x00);
+                   (SerPort_ReadClockOut() && Serial.ReadDeviceClock() ? 0x40 : 0x00) |
+                   0x3F;
 		}
 
 	    private int Cia1_ReadPortB()

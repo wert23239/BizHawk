@@ -104,7 +104,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                     _ifr &= 0xE7;
                     if (_pcrCb2Control == PCR_CONTROL_HANDSHAKE_OUTPUT || _pcrCb2Control == PCR_CONTROL_PULSE_OUTPUT)
                     {
-                        _handshakeCb2NextClock = true;
+                        _setCb2NextClock = true;
                     }
                     WriteRegister(addr, val);
                     break;
@@ -112,7 +112,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                     _ifr &= 0xFC;
                     if (_pcrCa2Control == PCR_CONTROL_HANDSHAKE_OUTPUT || _pcrCa2Control == PCR_CONTROL_PULSE_OUTPUT)
                     {
-                        _handshakeCa2NextClock = true;
+                        _setCa2NextClock = true;
                     }
                     WriteRegister(addr, val);
                     break;
@@ -126,6 +126,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                     _t1C = _t1L;
                     _t1CLoaded = true;
                     _t1Delayed = 1;
+                    _resetPb7NextClock = _acrT1Control == ACR_T1_CONTROL_INTERRUPT_ON_LOAD_AND_PULSE_PB7;
                     break;
                 case 0x7:
                     _t1L = (_t1L & 0xFF) | ((val & 0xFF) << 8);
