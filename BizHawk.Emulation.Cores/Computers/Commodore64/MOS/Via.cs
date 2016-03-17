@@ -31,7 +31,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         [SaveState.DoNotSave] private const int ACR_T2_CONTROL_COUNT_ON_PB6 = 0x20;
         [SaveState.DoNotSave] private const int ACR_T1_CONTROL_INTERRUPT_ON_LOAD = 0x00;
         [SaveState.DoNotSave] private const int ACR_T1_CONTROL_CONTINUOUS_INTERRUPTS = 0x40;
-        [SaveState.DoNotSave] private const int ACR_T1_CONTROL_INTERRUPT_ON_LOAD_AND_ONESHOT_PB7 = 0x80;
+        [SaveState.DoNotSave] private const int ACR_T1_CONTROL_INTERRUPT_ON_LOAD_AND_PULSE_PB7 = 0x80;
         [SaveState.DoNotSave] private const int ACR_T1_CONTROL_CONTINUOUS_INTERRUPTS_AND_OUTPUT_ON_PB7 = 0xC0;
 
         [SaveState.SaveWithName("PortOutputA")]
@@ -102,11 +102,15 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         private bool _resetCa2NextClock;
         [SaveState.SaveWithName("ResetCb2NextClock")]
         private bool _resetCb2NextClock;
+        [SaveState.SaveWithName("ResetPb7NextClock")]
+        private bool _resetPb7NextClock;
 
         [SaveState.SaveWithName("HandshakeCa2NextClock")]
-        private bool _handshakeCa2NextClock;
+        private bool _setCa2NextClock;
         [SaveState.SaveWithName("HandshakeCb2NextClock")]
-        private bool _handshakeCb2NextClock;
+        private bool _setCb2NextClock;
+        [SaveState.SaveWithName("HandshakePb7NextClock")]
+        private bool _setPb7NextClock;
 
         [SaveState.SaveWithName("CA1")]
         public bool Ca1;
@@ -189,11 +193,13 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             _pb6 = false;
             _resetCa2NextClock = false;
             _resetCb2NextClock = false;
-            _handshakeCa2NextClock = false;
-            _handshakeCb2NextClock = false;
+            _setCa2NextClock = false;
+            _setCb2NextClock = false;
             _interruptNextClock = 0;
             _t1CLoaded = false;
             _t2CLoaded = false;
+            _resetPb7NextClock = false;
+            _setPb7NextClock = false;
         }
 
         public void ExecutePhase()
@@ -202,18 +208,18 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             _ifr |= _interruptNextClock;
             _interruptNextClock = 0;
 
-            // Process 'pulse' and 'handshake' outputs on CA2 and CB2
+            // Process 'pulse' and 'handshake' outputs on PB7, CA2 and CB2
 
             if (_resetCa2NextClock)
             {
                 Ca2 = true;
                 _resetCa2NextClock = false;
             }
-            else if (_handshakeCa2NextClock)
+            else if (_setCa2NextClock)
             {
                 Ca2 = false;
                 _resetCa2NextClock = _pcrCa2Control == PCR_CONTROL_PULSE_OUTPUT;
-                _handshakeCa2NextClock = false;
+                _setCa2NextClock = false;
             }
 
             if (_resetCb2NextClock)
@@ -221,11 +227,22 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                 Cb2 = true;
                 _resetCb2NextClock = false;
             }
-            else if (_handshakeCb2NextClock)
+            else if (_setCb2NextClock)
             {
                 Cb2 = false;
                 _resetCb2NextClock = _pcrCb2Control == PCR_CONTROL_PULSE_OUTPUT;
-                _handshakeCb2NextClock = false;
+                _setCb2NextClock = false;
+            }
+
+            if (_resetPb7NextClock)
+            {
+                _prb &= 0x7F;
+                _resetPb7NextClock = false;
+            }
+            else if (_setPb7NextClock)
+            {
+                _prb |= 0x80;
+                _setPb7NextClock = false;
             }
 
             // Count timers
@@ -237,7 +254,19 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             else
             {
                 _t1C--;
-                if (_t1C < 0)
+                if (_t1C == 0)
+                {
+                    switch (_acrT1Control)
+                    {
+                        case ACR_T1_CONTROL_CONTINUOUS_INTERRUPTS_AND_OUTPUT_ON_PB7:
+                            _prb ^= 0x80;
+                            break;
+                        case ACR_T1_CONTROL_INTERRUPT_ON_LOAD_AND_PULSE_PB7:
+                            _prb |= 0x80;
+                            break;
+                    }
+                }
+                else if (_t1C < 0)
                 {
                     if (_t1CLoaded)
                     {
@@ -252,7 +281,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                             break;
                         case ACR_T1_CONTROL_CONTINUOUS_INTERRUPTS_AND_OUTPUT_ON_PB7:
                             _t1C = _t1L;
-                            _prb ^= 0x80;
                             _t1CLoaded = true;
                             break;
                     }
