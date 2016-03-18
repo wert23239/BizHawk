@@ -36,6 +36,16 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
         private int _clocks;
         [SaveState.SaveWithName("CpuClocks")]
         private int _cpuClocks;
+        [SaveState.SaveWithName("DiskWriteBitsRemaining")]
+        private int _diskWriteBitsRemaining;
+        [SaveState.SaveWithName("DiskWriteEnabled")]
+        private bool _diskWriteEnabled;
+        [SaveState.SaveWithName("DiskWriteLatch")]
+        private int _diskWriteLatch;
+        [SaveState.SaveWithName("DiskOutputBits")]
+        private int _diskOutputBits;
+        [SaveState.SaveWithName("DiskWriteProtected")]
+        private bool _diskWriteProtected;
 
         // Lehmer RNG
         private void AdvanceRng()
@@ -64,20 +74,37 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
                     {
                         if (_diskBitsLeft <= 0)
                         {
+                            if (_diskWriteEnabled)
+                                _trackImageData[_diskByteOffset] = _diskOutputBits;
+
                             _diskByteOffset++;
+
                             if (_diskByteOffset == Disk.FluxEntriesPerTrack)
-                            {
                                 _diskByteOffset = 0;
-                            }
-                            _diskBits = _trackImageData[_diskByteOffset];
+
+                            if (!_diskWriteEnabled)
+                                _diskBits = _trackImageData[_diskByteOffset];
+
+                            _diskOutputBits = 0;
                             _diskBitsLeft = Disk.FluxBitsPerEntry;
                         }
                     }
+                    _diskOutputBits >>= 1;
+
+                    if (_diskWriteEnabled)
+                        _countsBeforeRandomTransition = 0;
+
                     if ((_diskBits & 1) != 0)
                     {
                         _countsBeforeRandomTransition = 0;
                         _diskFluxReversalDetected = true;
+                        _diskOutputBits |= int.MinValue; // set bit 31
                     }
+                    else
+                    {
+                        _diskOutputBits &= int.MaxValue; // clear bit 31
+                    }
+
                     _diskBits >>= 1;
                     _diskBitsLeft--;
                 }
@@ -98,8 +125,11 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
                 // flux transition circuitry
                 if (_diskFluxReversalDetected)
                 {
-                    _diskDensityCounter = _diskDensity;
-                    _diskSupplementaryCounter = 0;
+                    if (!_diskWriteEnabled)
+                    {
+                        _diskDensityCounter = _diskDensity;
+                        _diskSupplementaryCounter = 0;
+                    }
                     _diskFluxReversalDetected = false;
                     if (_countsBeforeRandomTransition == 0)
                     {
@@ -114,35 +144,60 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
                 {
                     _diskDensityCounter = _diskDensity;
                     _diskSupplementaryCounter++;
+
                     if ((_diskSupplementaryCounter & 0x3) == 0x2)
                     {
-                        _bitsRemainingInLatchedByte--;
-                        _byteReady = false;
-                        _bitHistory = (_bitHistory << 1) | ((_diskSupplementaryCounter & 0xC) == 0x0 ? 1 : 0);
-                        _sync = false;
-                        if (Via1.Cb2 && (_bitHistory & 0x3FF) == 0x3FF)
+                        if (!_diskWriteEnabled)
+                            _diskWriteBitsRemaining = 0;
+                        _diskWriteEnabled = !Via1.Cb2;
+
+                        _diskWriteBitsRemaining--;
+                        if (_diskWriteEnabled)
                         {
-                            _sync = true;
-                            _bitsRemainingInLatchedByte = 8;
+                            _countsBeforeRandomTransition = 0;
                             _byteReady = false;
+                            if (_diskWriteBitsRemaining <= 0)
+                            {
+                                _diskWriteLatch = Via1.EffectivePrA;
+                                _diskWriteBitsRemaining = 8;
+                                _byteReady = Via1.Ca2;
+                            }
+                            if ((_diskWriteLatch & 0x80) != 0)
+                            {
+                                _diskOutputBits |= int.MinValue; // set bit 31
+                            }
+                            _diskWriteLatch <<= 1;
                         }
-
-                        if (_bitsRemainingInLatchedByte <= 0)
+                        else
                         {
-                            _bitsRemainingInLatchedByte = 8;
+                            _bitsRemainingInLatchedByte--;
+                            _byteReady = false;
+                            _bitHistory = (_bitHistory << 1) | ((_diskSupplementaryCounter & 0xC) == 0x0 ? 1 : 0);
+                            _sync = false;
+                            if (!_diskWriteEnabled && (_bitHistory & 0x3FF) == 0x3FF)
+                            {
+                                _sync = true;
+                                _bitsRemainingInLatchedByte = 8;
+                                _byteReady = false;
+                            }
 
-                            // SOE (sync output enabled)
-                            _byteReady = Via1.Ca2;
-                        }
+                            if (_bitsRemainingInLatchedByte <= 0)
+                            {
+                                _bitsRemainingInLatchedByte = 8;
 
-                        // negative transition activates SO pin on CPU
-                        _previousCa1 = Via1.Ca1;
-                        Via1.Ca1 = !_byteReady;
-                        if (_previousCa1 && !Via1.Ca1)
-                        {
-                            // cycle 6 is roughly 400ns
-                            _overflowFlagDelaySr |= _diskCycle > 6 ? 4 : 2;
+                                // SOE (SO/Byte Ready enabled)
+                                _byteReady = Via1.Ca2;
+                            }
                         }
+                    }
+
+                    // negative transition activates SO pin on CPU
+                    _previousCa1 = Via1.Ca1;
+                    Via1.Ca1 = !_byteReady;
+                    if (_previousCa1 && !Via1.Ca1)
+                    {
+                        // cycle 6 is roughly 400ns
+                        _overflowFlagDelaySr |= _diskCycle > 6 ? 4 : 2;
                     }
                 }
 
