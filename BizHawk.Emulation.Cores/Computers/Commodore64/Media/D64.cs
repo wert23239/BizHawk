@@ -9,6 +9,22 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
 	{
 	    const int D64_DISK_ID_OFFSET = 0x165A2; // track 18, sector 0, 0xA2
 
+	    private enum ErrorType
+	    {
+            NoError = 0x01,
+            HeaderNotFound = 0x02,
+            NoSyncSequence = 0x03,
+            DataNotFound = 0x04,
+            DataChecksumError = 0x05,
+            WriteVerifyFormatError = 0x06,
+            WriteVerifyError = 0x07,
+            WriteProtectOn = 0x08,
+            HeaderChecksumError = 0x09,
+            WriteError = 0x0A,
+            IdMismatch = 0x0B,
+            DriveNotReady = 0x0F
+	    }
+
         private static readonly int[] DensityTable =
 		{
 			3, 3, 3, 3, 3,
@@ -82,25 +98,34 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
 			return result;
 		}
 
-		private static byte[] ConvertSectorToGcr(byte[] source, byte sectorNo, byte trackNo, byte formatA, byte formatB, int gapLength, out int bitsWritten)
+		private static byte[] ConvertSectorToGcr(byte[] source, byte sectorNo, byte trackNo, byte formatA, byte formatB, int gapLength, ErrorType errorType, out int bitsWritten)
 		{
 		    using (var mem = new MemoryStream())
 		    {
                 var writer = new BinaryWriter(mem);
-                var headerChecksum = (byte)(sectorNo ^ trackNo ^ formatA ^ formatB);
+
+		        if (errorType == ErrorType.IdMismatch)
+		        {
+		            formatA ^= 0xFF;
+		            formatB ^= 0xFF;
+		        }
+
+                var headerChecksum = (byte)(sectorNo ^ trackNo ^ formatA ^ formatB ^ (errorType == ErrorType.HeaderChecksumError ? 0xFF : 0x00));
 
                 // assemble written data for GCR encoding
                 var writtenData = new byte[260];
+		        var syncBytes40 = Enumerable.Repeat((byte) (errorType == ErrorType.NoSyncSequence ? 0x00 : 0xFF), 5).ToArray();
+
                 Array.Copy(source, 0, writtenData, 1, 256);
-                writtenData[0] = 0x07;
-                writtenData[0x101] = Checksum(source);
+                writtenData[0] = (byte)(errorType == ErrorType.HeaderNotFound ? 0x00 : 0x07);
+                writtenData[0x101] = (byte)(Checksum(source) ^ (errorType == ErrorType.DataChecksumError ? 0xFF : 0x00));
                 writtenData[0x102] = 0x00;
                 writtenData[0x103] = 0x00;
 
-                writer.Write(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }); // sync
-                writer.Write(EncodeGcr(new byte[] { 0x08, headerChecksum, sectorNo, trackNo, formatA, formatB, 0x0F, 0x0F })); // header
+                writer.Write(syncBytes40); // sync
+                writer.Write(EncodeGcr(new byte[] { (byte)(errorType == ErrorType.DataNotFound ? 0x00 : 0x08), headerChecksum, sectorNo, trackNo, formatA, formatB, 0x0F, 0x0F })); // header
                 writer.Write(new byte[] { 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 }); // gap
-                writer.Write(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }); // sync
+                writer.Write(syncBytes40); // sync
                 writer.Write(EncodeGcr(writtenData)); // data
                 writer.Write(Enumerable.Repeat((byte)0x55, gapLength).ToArray()); // gap
 
@@ -164,7 +189,9 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
                 var trackLengths = new List<int>();
                 var trackNumbers = new List<int>();
                 var trackDensities = new List<int>();
+		        var errorType = ErrorType.NoError;
                 int trackCount;
+		        int errorOffset = -1;
 
                 switch (source.Length)
                 {
@@ -173,12 +200,14 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
                         break;
                     case 175531: // 35 tracks with errors
                         trackCount = 35;
+                        errorOffset = 174848;
                         break;
                     case 196608: // 40 tracks no errors
                         trackCount = 40;
                         break;
                     case 197376: // 40 tracks with errors
                         trackCount = 40;
+                        errorOffset = 196608;
                         break;
                     default:
                         throw new Exception("Not able to identify capacity of the D64 file.");
@@ -186,6 +215,11 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
 
                 for (var i = 0; i < trackCount; i++)
                 {
+                    if (errorOffset >= 0)
+                    {
+                        errorType = (ErrorType) source[errorOffset];
+                        errorOffset++;
+                    }
                     var sectors = SectorsPerTrack[i];
                     var trackLengthBits = 0;
                     using (var trackMem = new MemoryStream())
@@ -194,7 +228,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Media
                         {
                             int bitsWritten;
                             var sectorData = reader.ReadBytes(256);
-                            var diskData = ConvertSectorToGcr(sectorData, (byte)j, (byte)(i + 1), formatA, formatB, StandardSectorGapLength[DensityTable[i]], out bitsWritten);
+                            var diskData = ConvertSectorToGcr(sectorData, (byte)j, (byte)(i + 1), formatA, formatB, StandardSectorGapLength[DensityTable[i]], errorType, out bitsWritten);
                             trackMem.Write(diskData, 0, diskData.Length);
                             trackLengthBits += bitsWritten;
                         }

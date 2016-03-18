@@ -52,7 +52,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
 
         private int ReadVia1PrB()
         {
-            return (_motorStep & 0x03) | (_motorEnabled ? 0x04 : 0x00) | (_sync ? 0x00 : 0x80);
+            return (_motorStep & 0x03) | (_motorEnabled ? 0x04 : 0x00) | (_sync ? 0x00 : 0x80) | (_diskWriteProtected ? 0x00 : 0x10);
         }
 
         public int Peek(int addr)
