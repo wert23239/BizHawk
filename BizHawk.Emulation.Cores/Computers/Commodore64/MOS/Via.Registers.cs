@@ -62,7 +62,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                 case 0x0:
                     return _port.ReadPrb(_prb, _ddrb);
                 case 0x1:
-                    return _port.ReadPra(_pra, _ddra);
+                    return _port.ReadExternalPra();
                 case 0x2:
                     return _ddrb;
                 case 0x3:
@@ -90,7 +90,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                 case 0xE:
                     return _ier | 0x80;
                 case 0xF:
-                    return _port.ReadPra(_pra, _ddra);
+                    return _port.ReadExternalPra();
             }
             return 0xFF;
         }
@@ -266,7 +266,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
         [SaveState.DoNotSave]
         public int ActualPrA
         {
-            get { return _acrPaLatchEnable ? _paLatch : _port.ReadPra(_pra, _ddra); }
+            get { return _acrPaLatchEnable ? _paLatch : _port.ReadExternalPra(); }
         }
 
         [SaveState.DoNotSave]

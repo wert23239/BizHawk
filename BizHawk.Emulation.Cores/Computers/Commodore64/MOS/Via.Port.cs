@@ -11,7 +11,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
     {
         private abstract class Port
         {
-            public abstract int ReadPra(int pra, int ddra);
             public abstract int ReadPrb(int prb, int ddrb);
             public abstract int ReadExternalPra();
             public abstract int ReadExternalPrb();
@@ -24,11 +23,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
 
         private sealed class DisconnectedPort : Port
         {
-            public override int ReadPra(int pra, int ddra)
-            {
-                return (pra | ~ddra) & 0xFF;
-            }
-
             public override int ReadPrb(int prb, int ddrb)
             {
                 return (prb | ~ddrb) & 0xFF;
@@ -54,11 +48,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             {
                 _readPrA = readPrA;
                 _readPrB = readPrB;
-            }
-
-            public override int ReadPra(int pra, int ddra)
-            {
-                return _readPrA();
             }
 
             public override int ReadPrb(int prb, int ddrb)
@@ -90,11 +79,6 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
                 _readData = readData;
                 _readAtn = readAtn;
                 _driveNumber = (driveNumber & 0x3) << 5;
-            }
-
-            public override int ReadPra(int pra, int ddra)
-            {
-                return (pra | ~ddra) & 0xFF;
             }
 
             public override int ReadPrb(int prb, int ddrb)
