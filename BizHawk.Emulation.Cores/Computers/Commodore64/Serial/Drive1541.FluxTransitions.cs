@@ -74,7 +74,7 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.Serial
                     {
                         if (_diskBitsLeft <= 0)
                         {
-                            if (_diskWriteEnabled)
+                            if (_diskWriteEnabled && !_diskWriteProtected)
                                 _trackImageData[_diskByteOffset] = _diskOutputBits;
 
                             _diskByteOffset++;
