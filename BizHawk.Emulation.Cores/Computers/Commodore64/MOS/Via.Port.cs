@@ -15,6 +15,11 @@ namespace BizHawk.Emulation.Cores.Computers.Commodore64.MOS
             public abstract int ReadExternalPra();
             public abstract int ReadExternalPrb();
 
+            public int ReadPra(int pra, int ddra)
+            {
+                return (pra | ~ddra) & ReadExternalPra();
+            }
+
             public void SyncState(Serializer ser)
             {
                 SaveState.SyncObject(ser, this);
