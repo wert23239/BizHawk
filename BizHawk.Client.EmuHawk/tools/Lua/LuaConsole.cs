@@ -408,7 +408,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		private static FileInfo GetFileFromUser(string filter)
+		public static FileInfo GetFileFromUser(string filter)
 		{
 			var ofd = new OpenFileDialog
 				{
@@ -449,7 +449,7 @@ namespace BizHawk.Client.EmuHawk
 			NumberOfScripts.Text = message;
 		}
 
-		private void LoadLuaFromRecent(string path)
+		public void LoadLuaFromRecent(string path)
 		{
 			LoadLuaFile(path);
 		}
@@ -1393,6 +1393,11 @@ namespace BizHawk.Client.EmuHawk
 			base.GenericDragEnter(sender, e);
 		}
 
-		#endregion
-	}
+        #endregion
+
+        private void ScriptSubMenu_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
 }

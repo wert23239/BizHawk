@@ -44,23 +44,24 @@ namespace BizHawk.Client.Common
 		)]
 		public void AddGameGenie(string code)
 		{
-			if (NESAvailable && HasMemoryDOmains)
-			{
-				var decoder = new NESGameGenieDecoder(code);
-				var watch = Watch.GenerateWatch(
-					_memoryDomains["System Bus"],
-					decoder.Address,
-					WatchSize.Byte,
-					DisplayType.Hex,
-					false,
-					code);
+            Global.Emulator.FrameAdvance(false);
+            //if (NESAvailable && HasMemoryDOmains)
+            //{
+            //	var decoder = new NESGameGenieDecoder(code);
+            //	var watch = Watch.GenerateWatch(
+            //		_memoryDomains["System Bus"],
+            //		decoder.Address,
+            //		WatchSize.Byte,
+            //		DisplayType.Hex,
+            //		false,
+            //		code);
 
-				Global.CheatList.Add(new Cheat(
-					watch,
-					decoder.Value,
-					decoder.Compare));
-			}
-		}
+            //	Global.CheatList.Add(new Cheat(
+            //		watch,
+            //		decoder.Value,
+            //		decoder.Compare));
+            //}
+        }
 
 		[LuaMethodAttributes(
 			"getallowmorethaneightsprites",

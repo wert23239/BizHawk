@@ -623,7 +623,7 @@ namespace BizHawk.Client.MultiHawk
 
 		public void ProgramRunLoop()
 		{			
-			CheckMessages();
+		   CheckMessages();
 
 			for (; ; )
 			{

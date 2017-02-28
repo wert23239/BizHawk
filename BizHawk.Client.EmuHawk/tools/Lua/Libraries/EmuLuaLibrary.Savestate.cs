@@ -45,7 +45,16 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		[LuaMethodAttributes(
+        [LuaMethodAttributes(
+            "rewind",
+            "Parameterless"
+        )]
+        public void Rewind()
+        {
+            GlobalWin.MainForm.RewindTime();
+        }
+
+        [LuaMethodAttributes(
 			"save",
 			"Saves a state at the given path"
 		)]

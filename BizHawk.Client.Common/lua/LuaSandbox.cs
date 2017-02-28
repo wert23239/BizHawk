@@ -42,6 +42,7 @@ namespace BizHawk.Client.Common
 			//first we'll bypass it with a general hack: dont do any setting if the value's already there (even at the OS level, setting the directory can be slow)
 			//yeah I know, not the smoothest move to compare strings here, in case path normalization is happening at some point
 			//but you got any better ideas?
+            //yes
 			if (currDirSpeedHack == null)
 				currDirSpeedHack = CoolGetCurrentDirectory();
 			if (currDirSpeedHack == path)

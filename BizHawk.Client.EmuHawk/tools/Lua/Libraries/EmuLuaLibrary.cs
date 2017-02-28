@@ -175,7 +175,7 @@ namespace BizHawk.Client.EmuHawk
 				LuaLibraryBase.SetCurrentThread(_currThread);
 
 				var execResult = script.Resume(0);
-
+                script.Resume(1);
 				_lua.RunScheduledDisposes();
 				//not sure how this is going to work out, so do this too
 				script.RunScheduledDisposes();
