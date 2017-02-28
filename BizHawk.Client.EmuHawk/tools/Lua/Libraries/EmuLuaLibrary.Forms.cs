@@ -184,6 +184,7 @@ namespace BizHawk.Client.EmuHawk
             var checkbox = new LuaCheckbox();
             checkbox.FlatStyle = FlatStyle.Standard;
             form.Controls.Add(checkbox);
+            checkbox.Font = new Font("Segoe UI", 6, FontStyle.Italic);
             SetText(checkbox, caption);
 
             if (option == "true")
@@ -441,7 +442,7 @@ namespace BizHawk.Client.EmuHawk
             var label = new Label();
             if (!fixedWidth)
             {
-                label.Font = new Font("Segoe UI", 12,FontStyle.Bold);
+                label.Font = new Font("Segoe UI", 8,FontStyle.Bold);
             }
 
             SetText(label, caption);

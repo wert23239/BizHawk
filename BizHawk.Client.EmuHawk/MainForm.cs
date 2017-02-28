@@ -562,7 +562,7 @@ namespace BizHawk.Client.EmuHawk
                 if (second == 2)
                 {
                     //SORRY THIS IS HARDCODED
-                    current.LoadLuaFile(".\\Lua\\NES\\SethAI.lua");
+                    current.LoadLuaFile(".\\Lua\\NES\\MarioAI.lua");
                 }
 
                 if (first)

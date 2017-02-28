@@ -198,7 +198,7 @@ namespace BizHawk.Client.EmuHawk
                 Global.Config.DispMethod = Config.EDispMethod.GdiPlus;
                 goto REDO_DISPMETHOD;
             }
-
+             
             //WHY do we have to do this? some intel graphics drivers (ig7icd64.dll 10.18.10.3304 on an unknown chip on win8.1) are calling SetDllDirectory() for the process, which ruins stuff.
             //The relevant initialization happened just before in "create IGL context".
             //It isn't clear whether we need the earlier SetDllDirectory(), but I think we do.
