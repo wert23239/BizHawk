@@ -7,6 +7,7 @@ namespace RealTimeCharts
         /// <summary>
         /// Required designer variable.
         /// </summary>
+		/// test
         private System.ComponentModel.IContainer components = null;
 
         /// <summary>

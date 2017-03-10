@@ -7,6 +7,7 @@ using LuaInterface;
 using BizHawk.Common;
 using BizHawk.Emulation.Common;
 using BizHawk.Client.Common;
+using System.Data.SQLite;
 
 
 namespace BizHawk.Client.EmuHawk
@@ -14,6 +15,7 @@ namespace BizHawk.Client.EmuHawk
 	[Description("A library for manipulating the EmuHawk client UI")]
 	public sealed class EmuHawkLuaLibrary : LuaLibraryBase
 	{
+		SQLiteConnection m_dbConnection;
 		[RequiredService]
 		public IEmulator Emulator { get; set; }
 
@@ -174,6 +176,45 @@ namespace BizHawk.Client.EmuHawk
             //GlobalWin.DisplayManager.GameExtraPadding = new System.Windows.Forms.Padding(left, top, right, bottom);
             //GlobalWin.MainForm.FrameBufferResized();
 		}
+
+		[LuaMethodAttributes(
+			"OpenDatabase",
+			"Opens a SQL table"
+		)]
+		public void OpenDatabase()
+		{
+			
+			//SQLiteConnection.CreateFile("MyDatabase.db");
+			m_dbConnection = new SQLiteConnection("Data Source=MyDatabase.db;Version=3;");
+			m_dbConnection.Open();
+		}
+
+		[LuaMethodAttributes(
+			"CreateTable",
+			"Creates a SQL table"
+		)]
+		public void CreateTable()
+		{
+			string sql = "CREATE TABLE highscores (name VARCHAR(20), score INT)";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+		}
+
+
+
+
+		[LuaMethodAttributes(
+			"AddRow",
+			"Add a row in the SQL table"
+		)]
+		public void AddRow(string currentGenome,string fitness)
+		{
+			string sql = string.Format("insert into highscores (name, score) values ('{0}', {1})", currentGenome, Int32.Parse(fitness));
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+		}
+
+
 
 		[LuaMethodAttributes(
 			"SetSoundOn",
