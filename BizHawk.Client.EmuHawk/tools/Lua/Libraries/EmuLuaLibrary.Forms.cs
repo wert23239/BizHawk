@@ -29,6 +29,7 @@ namespace BizHawk.Client.EmuHawk
         #region Forms Library Helpers
 
         private readonly List<LuaWinform> _luaForms = new List<LuaWinform>();
+		private readonly List<ModernForm> _windowsForms = new List<ModernForm>();
 
         public void WindowClosed(IntPtr handle)
         {
@@ -511,7 +512,37 @@ namespace BizHawk.Client.EmuHawk
             return (int)form.Handle;
         }
 
-        [LuaMethodAttributes(
+		[LuaMethodAttributes(
+	"testform",
+	"creates a new default dialog, if both width and height are specified it will create a dialog of the specified size. If title is specified it will be the caption of the dialog, else the dialog caption will be 'Lua Dialog'. The function will return an int representing the handle of the dialog created."
+)]
+		public int TestForm(LuaFunction onClose = null)
+		{
+			ModernForm form = new ModernForm();
+			_windowsForms.Add(form);
+
+			form.Show();
+
+			form.FormClosed += (o, e) =>
+			{
+				if (onClose != null)
+				{
+					try
+					{
+						form.Close();
+						onClose.Call();
+					}
+					catch (Exception ex)
+					{
+						Log(ex.ToString());
+					}
+				}
+			};
+
+			return (int)form.Handle;
+		}
+
+		[LuaMethodAttributes(
             "openfile",
             "Creates a standard openfile dialog with optional parameters for the filename, directory, and filter. The return value is the directory that the user picked. If they chose to cancel, it will return an empty string"
         )]
@@ -719,7 +750,20 @@ namespace BizHawk.Client.EmuHawk
             }
         }
 
-        [LuaMethodAttributes(
+		[LuaMethodAttributes(
+	"getRightmost",
+	"Sets the text property of a control or form by passing in the handle of the created object"
+)]
+		public string GetRightmost()
+		{
+			foreach (var form in _windowsForms)
+			{
+				return form.trackBar1.Value.ToString();
+			}
+			return string.Empty == "" ? "0" : string.Empty;
+		}
+
+		[LuaMethodAttributes(
             "textbox",
             "Creates a textbox control on the given form. The caption property will be the initial value of the textbox (default is empty). Width and Height are option, if not specified they will be a default size of 100, 20. Type is an optional property to restrict the textbox input. The available options are HEX, SIGNED, and UNSIGNED. Passing it null or any other value will set it to no restriction. x, and y are the optional location parameters for the position of the textbox within the given form. The function returns the handle of the created textbox. If true, the multiline will enable the standard winform multi-line property. If true, the fixedWidth options will create a fixed width font. Scrollbars is an optional property to specify which scrollbars to display. The available options are Vertical, Horizontal, Both, and None. Scrollbars are only shown on a multiline textbox"
         )]

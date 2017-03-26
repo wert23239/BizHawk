@@ -24,6 +24,7 @@ svnrev.cs
 /BizHawk.Client.EmuHawk/tools/TAStudio/HistoryBox.resx
 
 
+
 /BizHawk.Emulation.DiscSystem/Properties/svnrev.cs
 
 
@@ -31,6 +32,8 @@ svnrev.cs
 /Build/*.vshost.*
 
 /Dist/*.zip
+
+
 
 /LuaInterface/LuaInterface/Properties
 /Version/bin
@@ -68,3 +71,7 @@ ExternalCoreProjects/Virtu/bin/*.*
 /psx/octoshock/bizhawk/Win32
 /psx/octoshock/bizhawk/x64
 /psx/octoshock/bizhawk/*.opendb
+
+
+!output/Lua/NES/MarioAI.lua
+!output/Lua/NES/*
