@@ -179,7 +179,7 @@ namespace BizHawk.Client.EmuHawk
 
 		[LuaMethodAttributes(
 			"OpenDatabase",
-			"Opens a SQL table"
+			"Opens SQL tables"
 		)]
 		public void OpenDatabase()
 		{
