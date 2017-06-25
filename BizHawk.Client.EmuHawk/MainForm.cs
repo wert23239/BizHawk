@@ -31,6 +31,7 @@ using BizHawk.Client.EmuHawk.CoreExtensions;
 using BizHawk.Client.ApiHawk;
 using BizHawk.Emulation.Common.Base_Implementations;
 using RealTimeCharts;
+using System.Data.SQLite;
 
 namespace BizHawk.Client.EmuHawk
 {
@@ -542,7 +543,7 @@ namespace BizHawk.Client.EmuHawk
 
 
 
-                if (GlobalWin.Tools.Has<LuaConsole>())
+				if (GlobalWin.Tools.Has<LuaConsole>())
                 {
                     GlobalWin.Tools.LuaConsole.ResumeScripts(false);
                 }
@@ -561,9 +562,30 @@ namespace BizHawk.Client.EmuHawk
                 // way to load lua file without causing invalid compilation in lua code
                 if (second == 2)
                 {
-                    //SORRY THIS IS HARDCODED
-                    current.LoadLuaFile(".\\Lua\\NES\\MarioAI.lua");
-                }
+					////SQLiteConnection m_dbConnection;
+					////string connectionString;
+					////SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
+					////connBuilder.DataSource = "DQN.db";
+					////connBuilder.Version = 3;
+					////connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
+					//////connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+					////connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
+					////m_dbConnection = new SQLiteConnection(connBuilder.ToString());
+					////m_dbConnection.Open();
+					////connectionString = connBuilder.ToString();
+					//SQLiteTransaction transaction;
+					//transaction = m_dbConnection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
+					//string sql = string.Format("insert into rewards (action,score) values ('{0}', {1});", "A", Int32.Parse("23"));
+					//SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection, transaction);
+					//command.ExecuteNonQuery();
+					//transaction.Commit();
+					////string sql = "PRAGMA read_uncommitted = 1;Select * from rewards where image is NULL;";
+					////SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+					////SQLiteDataReader reader = command.ExecuteReader();
+					////Console.WriteLine(reader.HasRows);
+					////Thread.Sleep(5);
+					current.LoadLuaFile(".\\Thread.lua");
+				}
 
                 if (first)
                 {

@@ -176,16 +176,28 @@ namespace BizHawk.Client.EmuHawk
             //GlobalWin.DisplayManager.GameExtraPadding = new System.Windows.Forms.Padding(left, top, right, bottom);
             //GlobalWin.MainForm.FrameBufferResized();
 		}
-
 		[LuaMethodAttributes(
+			"CreateDatabase",
+			"Creates SQL Database"
+		)]
+		public void CreateDatabase()
+		{
+			SQLiteConnection.CreateFile("DQN.db");
+			//SQLiteConnection.CreateFile("MyDatabase.db");
+			//m_dbConnection = new SQLiteConnection("Data Source=MyDatabase.db;Version=3;");
+			//m_dbConnection.Open();
+		}
+
+
+		[LuaMethodAttributes( 
 			"OpenDatabase",
-			"Opens SQL tables"
+			"Opens SQL Database"
 		)]
 		public void OpenDatabase()
 		{
 			
 			//SQLiteConnection.CreateFile("MyDatabase.db");
-			m_dbConnection = new SQLiteConnection("Data Source=MyDatabase.db;Version=3;");
+			m_dbConnection = new SQLiteConnection("Data Source=DQN.db;Version=3;");
 			m_dbConnection.Open();
 		}
 
@@ -195,7 +207,8 @@ namespace BizHawk.Client.EmuHawk
 		)]
 		public void CreateTable()
 		{
-			string sql = "CREATE TABLE highscores (name VARCHAR(20), score INT)";
+			//string sql = "create table highscores (name varchar(--20), score int)";
+			string sql = "create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20), score INT, image VARCHAR(1000))";
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
 		}
@@ -207,11 +220,24 @@ namespace BizHawk.Client.EmuHawk
 			"AddRow",
 			"Add a row in the SQL table"
 		)]
-		public void AddRow(string currentGenome,string fitness)
+		public string AddRow(string reward,string action)
 		{
-			string sql = string.Format("insert into highscores (name, score) values ('{0}', {1})", currentGenome, Int32.Parse(fitness));
+			string sql = string.Format("insert into rewards (action,score) values ('{0}', {1})", action,Int32.Parse(reward));
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
+			return sql;
+		}
+
+		[LuaMethodAttributes(
+			"CheckTable",
+			"Check if Table has updated takes in past RowCount"
+		)]
+		public bool CheckTable()
+		{
+			string sql = "Select * from rewards where image is NULL";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			return reader.HasRows==false;
 		}
 
 

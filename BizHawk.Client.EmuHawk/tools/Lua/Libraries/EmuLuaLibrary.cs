@@ -44,6 +44,8 @@ namespace BizHawk.Client.EmuHawk
 			get { return (GuiLuaLibrary)Libraries[typeof(GuiLuaLibrary)]; }
 		}
 
+
+
 		public EmuLuaLibrary(LuaConsole passed, IEmulatorServiceProvider serviceProvider)
 			: this()
 		{

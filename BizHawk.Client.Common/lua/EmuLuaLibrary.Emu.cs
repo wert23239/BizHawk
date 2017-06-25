@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-
+using System.Threading;
 using BizHawk.Emulation.Common;
 using BizHawk.Emulation.Common.IEmulatorExtensions;
 using BizHawk.Emulation.Cores.Nintendo.NES;
@@ -11,7 +11,7 @@ using BizHawk.Emulation.Cores.PCEngine;
 using BizHawk.Emulation.Cores.Sega.MasterSystem;
 using BizHawk.Emulation.Cores.WonderSwan;
 using BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES;
-
+using System.Data.SQLite;
 using LuaInterface;
 
 namespace BizHawk.Client.Common
@@ -55,6 +55,113 @@ namespace BizHawk.Client.Common
 		public static void DisplayVsync(bool enabled)
 		{
 			Global.Config.VSync = enabled;
+		}
+		SQLiteConnection m_dbConnection;
+		string connectionString;
+		int Frame=0;
+		[LuaMethodAttributes(
+			"opendatabase",
+			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
+		)]
+		public void OpenDatabase()
+		{
+			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
+			connBuilder.DataSource = "DQN.db";
+			connBuilder.Version = 3;
+			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
+			connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+			connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
+			m_dbConnection = new SQLiteConnection(connBuilder.ToString());
+			connectionString = connBuilder.ToString();
+			m_dbConnection.Open();
+			string sql = string.Format("PRAGMA read_uncommitted =1;delete from rewards;");
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+			m_dbConnection.Close();
+
+		}
+
+		[LuaMethodAttributes(
+			"createtable",
+			"Creates a SQL table"
+		)]
+		public void CreateTable()
+		{
+			//string sql = "create table highscores (name varchar(--20), score int)";
+			string sql = "create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20), score INT, image VARCHAR(1000))";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+		}
+
+		[LuaMethodAttributes(
+			"addrow",
+			"Add a row in the SQL table"
+		)]
+		public void AddRow(string reward, string action)
+		{
+			m_dbConnection.Open();
+			string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score) values ('{0}', {1});", "A", Int32.Parse("23"));
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+			m_dbConnection.Close();
+		}
+
+		[LuaMethodAttributes(
+			"addrowtwo",
+			"Add a row in the SQL table"
+		)]
+		public void AddRow2(string reward, string action)
+		{
+			string sql = "UPDATE rewards SET image ='28' WHERE image is NULL;";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+		}
+		[LuaMethodAttributes(
+			"checktable",
+			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
+		)]
+		public bool CheckTable()
+		{
+			try
+			{
+				m_dbConnection.Open();
+				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where image is NULL;";
+				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+				SQLiteDataReader reader = command.ExecuteReader();
+				//Console.WriteLine(reader.HasRows);
+				bool x = reader.HasRows;
+				m_dbConnection.Close();
+				return x;
+
+			}
+			catch
+			{
+				return true;
+			}
+
+		}
+
+		[LuaMethodAttributes(
+			"frameadvancethreaded",
+			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
+		)]
+		public int FrameAdvanceThreaded()
+		{
+			Frame += 1;
+			if (Frame%2==1)
+			{
+				FrameAdvanceCallback();
+				return 0;
+			}
+			if(Frame>100 && CheckTable())
+			{
+				Frame -= 1;
+				Thread.Sleep(50);
+				return 666;
+			}
+			FrameAdvanceCallback();
+			return 1; 
+			
 		}
 
 		[LuaMethodAttributes(
