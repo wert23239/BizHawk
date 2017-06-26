@@ -562,16 +562,15 @@ namespace BizHawk.Client.EmuHawk
                 // way to load lua file without causing invalid compilation in lua code
                 if (second == 2)
                 {
-					////SQLiteConnection m_dbConnection;
-					////string connectionString;
-					////SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
-					////connBuilder.DataSource = "DQN.db";
-					////connBuilder.Version = 3;
-					////connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
-					//////connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
-					////connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
-					////m_dbConnection = new SQLiteConnection(connBuilder.ToString());
-					////m_dbConnection.Open();
+					SQLiteConnection m_dbConnection;
+					string connectionString;
+					SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
+					connBuilder.DataSource = "DQN.db";
+					connBuilder.Version = 3;
+					connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
+					//connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+					connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
+					m_dbConnection = new SQLiteConnection(connBuilder.ToString());
 					////connectionString = connBuilder.ToString();
 					//SQLiteTransaction transaction;
 					//transaction = m_dbConnection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);

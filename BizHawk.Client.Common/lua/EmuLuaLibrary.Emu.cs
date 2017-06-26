@@ -59,38 +59,63 @@ namespace BizHawk.Client.Common
 		SQLiteConnection m_dbConnection;
 		string connectionString;
 		int Frame=0;
+
+
+		//Custom Database Calls
+		//T
+
+
 		[LuaMethodAttributes(
 			"opendatabase",
-			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
+			"Opens up a DQN SQLite database"
 		)]
 		public void OpenDatabase()
 		{
 			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
 			connBuilder.DataSource = "DQN.db";
-			connBuilder.Version = 3;
-			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
-			connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
-			connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
-			m_dbConnection = new SQLiteConnection(connBuilder.ToString());
+			connBuilder.Version = 3; //SQLite version 
+			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;  //Allows for reads and writes to happen at the same time
+			connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;  //This only helps make the database lock left. May be pointless now
+			connBuilder.SyncMode = SynchronizationModes.Off; //This shortens the delay for do synchronous calls.
+			m_dbConnection = new SQLiteConnection(connBuilder.ToString());  
 			connectionString = connBuilder.ToString();
+
+
+
+		}
+
+		/// <summary>
+		/// This is just a small function call to clear the main table out.
+		/// </summary>
+		private void  ClearDatabase()
+		{
 			m_dbConnection.Open();
-			string sql = string.Format("PRAGMA read_uncommitted =1;delete from rewards;");
+			string sql = string.Format(
+				"@PRAGMA read_uncommitted = 1;" +
+				"delete from rewards;"
+				);
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
 			m_dbConnection.Close();
-
 		}
 
 		[LuaMethodAttributes(
 			"createtable",
-			"Creates a SQL table"
+			"Creates a SQL table rewards for the DQN database" 
 		)]
 		public void CreateTable()
 		{
-			//string sql = "create table highscores (name varchar(--20), score int)";
 			string sql = "create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20), score INT, image VARCHAR(1000))";
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
+
+
+			//This table has a 
+			//auto incrementing primary key ID, 
+			//a action of what button pressed,
+			//a score for the reward,
+			//an image stored as a custom array type.
+			//a done flag which used to do multiprocessing. of bit type 
 		}
 
 		[LuaMethodAttributes(
@@ -100,22 +125,12 @@ namespace BizHawk.Client.Common
 		public void AddRow(string reward, string action)
 		{
 			m_dbConnection.Open();
-			string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score) values ('{0}', {1});", "A", Int32.Parse("23"));
+			string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score,done) values ('{0}', {1},0);", reward, Int32.Parse("23"));
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
 			m_dbConnection.Close();
 		}
 
-		[LuaMethodAttributes(
-			"addrowtwo",
-			"Add a row in the SQL table"
-		)]
-		public void AddRow2(string reward, string action)
-		{
-			string sql = "UPDATE rewards SET image ='28' WHERE image is NULL;";
-			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-			command.ExecuteNonQuery();
-		}
 		[LuaMethodAttributes(
 			"checktable",
 			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
@@ -125,10 +140,10 @@ namespace BizHawk.Client.Common
 			try
 			{
 				m_dbConnection.Open();
-				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where image is NULL;";
+				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where done is 0;";
 				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 				SQLiteDataReader reader = command.ExecuteReader();
-				//Console.WriteLine(reader.HasRows);
+				Console.WriteLine(reader.HasRows);
 				bool x = reader.HasRows;
 				m_dbConnection.Close();
 				return x;
@@ -141,28 +156,6 @@ namespace BizHawk.Client.Common
 
 		}
 
-		[LuaMethodAttributes(
-			"frameadvancethreaded",
-			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
-		)]
-		public int FrameAdvanceThreaded()
-		{
-			Frame += 1;
-			if (Frame%2==1)
-			{
-				FrameAdvanceCallback();
-				return 0;
-			}
-			if(Frame>100 && CheckTable())
-			{
-				Frame -= 1;
-				Thread.Sleep(50);
-				return 666;
-			}
-			FrameAdvanceCallback();
-			return 1; 
-			
-		}
 
 		[LuaMethodAttributes(
 			"frameadvance",
