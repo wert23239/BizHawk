@@ -598,7 +598,7 @@ namespace BizHawk.Client.EmuHawk
 					////SQLiteDataReader reader = command.ExecuteReader();
 					////Console.WriteLine(reader.HasRows);
 					////Thread.Sleep(5);
-					current.LoadLuaFile(".\\Thread.lua");
+					current.LoadLuaFile("..\\..\\Meta-MarIO\\Lua\\NES\\Main.lua");
 				}
 
                 if (first)

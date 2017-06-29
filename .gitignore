@@ -59,6 +59,7 @@ svnrev.cs
 .hg
 .hgignore
 .hgtags
+*.vs
 
 /LuaInterface/Lua/src/.libs
 /LuaInterface/Lua/src/Release-LUAPERKS
@@ -68,3 +69,5 @@ ExternalCoreProjects/Virtu/bin/*.*
 /psx/octoshock/bizhawk/Win32
 /psx/octoshock/bizhawk/x64
 /psx/octoshock/bizhawk/*.opendb
+/.vs
+/.vs
