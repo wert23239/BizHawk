@@ -562,16 +562,31 @@ namespace BizHawk.Client.EmuHawk
                 // way to load lua file without causing invalid compilation in lua code
                 if (second == 2)
                 {
-					SQLiteConnection m_dbConnection;
-					string connectionString;
-					SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
-					connBuilder.DataSource = "DQN.db";
-					connBuilder.Version = 3;
-					connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
-					//connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
-					connBuilder.SyncMode = System.Data.SQLite.SynchronizationModes.Off;
-					m_dbConnection = new SQLiteConnection(connBuilder.ToString());
-					////connectionString = connBuilder.ToString();
+					//SQLiteConnection m_dbConnection;
+					//string connectionString;
+					//SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder()
+					//{
+					//	DataSource = "../../Super-Meta-MarIO/DQN.db",
+					//	Version = 3,
+					//	JournalMode = SQLiteJournalModeEnum.Wal,
+					//	//connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+					//	SyncMode = SynchronizationModes.Off
+					//};
+					//m_dbConnection = new SQLiteConnection(connBuilder.ToString());
+					//connectionString = connBuilder.ToString();
+					//m_dbConnection.Open();
+					//const string sql = "PRAGMA read_uncommitted =1;Select action from rewards where score is NULL;";
+					////string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score,done) values ('{0}', {1},0);", reward, Int32.Parse("23"));
+					//SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+					//SQLiteDataReader reader = command.ExecuteReader();
+					//int button = 0;
+					//if (reader.Read())
+					//{
+					//	button = Int32.Parse(reader.GetValue(0).ToString());
+					//}
+					//reader.Close();
+					//m_dbConnection.Close();
+					////return button;
 					//SQLiteTransaction transaction;
 					//transaction = m_dbConnection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 					//string sql = string.Format("insert into rewards (action,score) values ('{0}', {1});", "A", Int32.Parse("23"));

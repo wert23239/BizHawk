@@ -71,32 +71,39 @@ namespace BizHawk.Client.Common
 		)]
 		public void OpenDatabase()
 		{
-			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder();
-			connBuilder.DataSource = "DQN.db";
-			connBuilder.Version = 3; //SQLite version 
-			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;  //Allows for reads and writes to happen at the same time
-			connBuilder.DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted;  //This only helps make the database lock left. May be pointless now
-			connBuilder.SyncMode = SynchronizationModes.Off; //This shortens the delay for do synchronous calls.
+			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder()
+			{
+				DataSource = "../../Super-Meta-MarIO/DQN.db",
+				Version = 3, //SQLite version 
+				JournalMode = SQLiteJournalModeEnum.Wal,  //Allows for reads and writes to happen at the same time
+				DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted,  //This only helps make the database lock left. May be pointless now
+				SyncMode = SynchronizationModes.Off //This shortens the delay for do synchronous calls.
+			};
 			m_dbConnection = new SQLiteConnection(connBuilder.ToString());  
 			connectionString = connBuilder.ToString();
-
-
-
+			ClearTable();
 		}
 
 		/// <summary>
 		/// This is just a small function call to clear the main table out.
 		/// </summary>
-		private void  ClearDatabase()
+		private void  ClearTable()
 		{
-			m_dbConnection.Open();
-			string sql = string.Format(
-				"@PRAGMA read_uncommitted = 1;" +
-				"delete from rewards;"
-				);
-			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-			command.ExecuteNonQuery();
-			m_dbConnection.Close();
+			try
+			{
+				m_dbConnection.Open();
+				string sql = string.Format(
+					"delete from rewards;"
+					);
+				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+				command.ExecuteNonQuery();
+				m_dbConnection.Close();
+			}
+			catch(SQLiteException sqlEX)
+			{
+				Console.WriteLine(sqlEX.Message);
+			}
+			
 		}
 
 		[LuaMethodAttributes(
@@ -131,6 +138,56 @@ namespace BizHawk.Client.Common
 			m_dbConnection.Close();
 		}
 
+		[LuaMethodAttributes("writecommand", "Runs a SQLite write command which includes CREATE,INSERT, UPDATE. " +
+			"Ex: create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20)) ")]
+		public string WriteCommand(string query = "")
+		{
+			if (query == "")
+			{
+				return "query is empty";
+			}
+			try
+			{
+				m_dbConnection.Open();
+				string sql = query;
+				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+				command.ExecuteNonQuery();
+				m_dbConnection.Close();
+
+				return "Command ran successfully";
+
+			}
+			catch (NullReferenceException nullEX)
+			{
+				return "Database not open.";
+			}
+			catch (SQLiteException sqlEX)
+			{
+				m_dbConnection.Close();
+				return sqlEX.Message;
+			}
+		}
+
+		[LuaMethodAttributes(
+			"getbutton",
+			"Add a row in the SQL table"
+		)]
+		public int GetButton()
+		{
+			m_dbConnection.Open();
+			const string sql = "PRAGMA read_uncommitted =1;Select action from rewards where score is NULL;";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			int button = 0;
+			if(reader.Read())
+			{
+				button = Int32.Parse(reader.GetValue(0).ToString());
+			}
+			reader.Close();
+			m_dbConnection.Close();
+			return button;
+		}
+
 		[LuaMethodAttributes(
 			"checktable",
 			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
@@ -140,11 +197,12 @@ namespace BizHawk.Client.Common
 			try
 			{
 				m_dbConnection.Open();
-				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where done is 0;";
+				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where done =0 or done =2;";
 				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 				SQLiteDataReader reader = command.ExecuteReader();
-				Console.WriteLine(reader.HasRows);
+				//Console.WriteLine(reader.HasRows);
 				bool x = reader.HasRows;
+				reader.Close();
 				m_dbConnection.Close();
 				return x;
 
