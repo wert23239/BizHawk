@@ -73,7 +73,7 @@ namespace BizHawk.Client.Common
 		{
 			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder()
 			{
-				DataSource = "../../Super-Meta-MarIO/DQN.db",
+				DataSource = "../../../Super-Meta-MarIO/DQN.db",
 				Version = 3, //SQLite version 
 				JournalMode = SQLiteJournalModeEnum.Wal,  //Allows for reads and writes to happen at the same time
 				DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted,  //This only helps make the database lock left. May be pointless now
@@ -82,6 +82,16 @@ namespace BizHawk.Client.Common
 			m_dbConnection = new SQLiteConnection(connBuilder.ToString());  
 			connectionString = connBuilder.ToString();
 			ClearTable();
+		}
+
+
+		[LuaMethodAttributes(
+			"sleep",
+			"Sleeps Thread"
+		)]
+		public void Sleep()
+		{
+			//Thread.Sleep(100);
 		}
 
 		/// <summary>
@@ -101,7 +111,6 @@ namespace BizHawk.Client.Common
 			}
 			catch(SQLiteException sqlEX)
 			{
-				Console.WriteLine(sqlEX.Message);
 			}
 			
 		}
@@ -124,6 +133,43 @@ namespace BizHawk.Client.Common
 			//an image stored as a custom array type.
 			//a done flag which used to do multiprocessing. of bit type 
 		}
+
+		[LuaMethodAttributes(
+			"updategenetable",
+			"Updates Organism Input Output Table"
+		)]
+		public string UpdateGeneTable(LuaTable Table)
+		{
+			m_dbConnection.Open();
+			string sql = "delete from Genes;";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+			sql = "";
+			foreach (var gene in Table.Keys)
+			{
+				string Value = Table[gene].ToString();
+				string [] Keys= gene.ToString().Split();
+				sql+=string.Format("insert into Genes (Species,Genome,Gene,GeneContent) values ({0},{1},{2},'{3}');", Keys[0],Keys[1],Keys[2],Value);
+				
+			}
+			command = new SQLiteCommand(sql, m_dbConnection);
+			command.ExecuteNonQuery();
+			m_dbConnection.Close();
+			return ":(";
+			////string sql = "create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20), score INT, image VARCHAR(1000))";
+			////SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			////command.ExecuteNonQuery();
+			
+			//This table has a 
+			//auto incrementing primary key ID, 
+			//a action of what button pressed,
+			//a score for the reward,
+			//an image stored as a custom array type.
+			//a done flag which used to do multiprocessing. of bit type 
+		}
+
+
+
 
 		[LuaMethodAttributes(
 			"addrow",
@@ -153,7 +199,6 @@ namespace BizHawk.Client.Common
 				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 				command.ExecuteNonQuery();
 				m_dbConnection.Close();
-
 				return "Command ran successfully";
 
 			}

@@ -575,6 +575,10 @@ namespace BizHawk.Client.EmuHawk
 					//m_dbConnection = new SQLiteConnection(connBuilder.ToString());
 					//connectionString = connBuilder.ToString();
 					//m_dbConnection.Open();
+					//string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score,done) values ({0}, {1},0);", 23, Int32.Parse("23"));
+					//SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+					//command.ExecuteNonQuery();
+					//m_dbConnection.Close();
 					//const string sql = "PRAGMA read_uncommitted =1;Select action from rewards where score is NULL;";
 					////string sql = string.Format("PRAGMA read_uncommitted =1;insert into rewards (action,score,done) values ('{0}', {1},0);", reward, Int32.Parse("23"));
 					//SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
