@@ -44,7 +44,6 @@ namespace BizHawk.Client.EmuHawk
         private void MainForm_Load(object sender, EventArgs e)
         {
             SetWindowText();
-
             // Hide Status bar icons and general statusbar prep
             MainStatusBar.Padding = new Padding(MainStatusBar.Padding.Left, MainStatusBar.Padding.Top, MainStatusBar.Padding.Left, MainStatusBar.Padding.Bottom); // Workaround to remove extra padding on right
             PlayRecordStatusButton.Visible = false;
@@ -602,7 +601,9 @@ namespace BizHawk.Client.EmuHawk
 					////SQLiteDataReader reader = command.ExecuteReader();
 					////Console.WriteLine(reader.HasRows);
 					////Thread.Sleep(5);
-					current.LoadLuaFile("..\\..\\Meta-MarIO\\Lua\\NES\\Main.lua");
+					//current.LoadLuaFile(".\\Lua\\NES\\Main.lua");
+				    current.LoadLuaFile(".\\Lua\\NES\\Main.lua");
+					//current.LoadLuaFile("..\\..\\Meta-MarIO\\Lua\\NES\\Main.lua");
 				}
 
                 if (first)

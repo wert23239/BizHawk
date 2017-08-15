@@ -73,7 +73,8 @@ namespace BizHawk.Client.Common
 		{
 			SQLiteConnectionStringBuilder connBuilder = new SQLiteConnectionStringBuilder()
 			{
-				DataSource = "../../../Super-Meta-MarIO/DQN.db",
+				//DataSource = "../../../Super-Meta-MarIO/DQN.db",
+				DataSource = "../../Super-Meta-MarIO/DQN.db",
 				Version = 3, //SQLite version 
 				JournalMode = SQLiteJournalModeEnum.Wal,  //Allows for reads and writes to happen at the same time
 				DefaultIsolationLevel = System.Data.IsolationLevel.ReadCommitted,  //This only helps make the database lock left. May be pointless now
@@ -144,28 +145,22 @@ namespace BizHawk.Client.Common
 			string sql = "delete from Genes;";
 			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 			command.ExecuteNonQuery();
-			sql = "";
-			foreach (var gene in Table.Keys)
+			using (var cmd = new SQLiteCommand(m_dbConnection))
 			{
-				string Value = Table[gene].ToString();
-				string [] Keys= gene.ToString().Split();
-				sql+=string.Format("insert into Genes (Species,Genome,Gene,GeneContent) values ({0},{1},{2},'{3}');", Keys[0],Keys[1],Keys[2],Value);
-				
+				using (var transaction = m_dbConnection.BeginTransaction())
+				{
+					foreach (var gene in Table.Keys)
+					{
+						string Value = Table[gene].ToString();
+						string[] Keys = gene.ToString().Split();
+						cmd.CommandText= string.Format("insert into Genes (Species,Genome,GenomeNum,Gene,GeneContent) values ({0},{1},{2},{3},'{4}');", Keys[0], Keys[1], Keys[2], Keys[3], Value);
+						cmd.ExecuteNonQuery();
+					}
+					transaction.Commit();
+				}
 			}
-			command = new SQLiteCommand(sql, m_dbConnection);
-			command.ExecuteNonQuery();
 			m_dbConnection.Close();
 			return ":(";
-			////string sql = "create TABLE rewards (ID integer  PRIMARY KEY, action VARCHAR(20), score INT, image VARCHAR(1000))";
-			////SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-			////command.ExecuteNonQuery();
-			
-			//This table has a 
-			//auto incrementing primary key ID, 
-			//a action of what button pressed,
-			//a score for the reward,
-			//an image stored as a custom array type.
-			//a done flag which used to do multiprocessing. of bit type 
 		}
 
 
@@ -234,6 +229,47 @@ namespace BizHawk.Client.Common
 		}
 
 		[LuaMethodAttributes(
+			"getgenome",
+			"Gain a genome from rewards"
+		)]
+		public int GetGenome()
+		{
+			m_dbConnection.Open();
+			const string sql = "PRAGMA read_uncommitted =1;Select genome from rewards where score is NULL;";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			int button = 0;
+			if (reader.Read())
+			{
+				button = Int32.Parse(reader.GetValue(0).ToString());
+			}
+			reader.Close();
+			m_dbConnection.Close();
+			return button;
+		}
+
+
+		[LuaMethodAttributes(
+			"getspecies",
+			"Add a row in the SQL table"
+		)]
+		public int GetSpecies()
+		{
+			m_dbConnection.Open();
+			const string sql = "PRAGMA read_uncommitted =1;Select species from rewards where score is NULL;";
+			SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			int button = 0;
+			if (reader.Read())
+			{
+				button = Int32.Parse(reader.GetValue(0).ToString());
+			}
+			reader.Close();
+			m_dbConnection.Close();
+			return button;
+		}
+
+		[LuaMethodAttributes(
 			"checktable",
 			"Signals to the emulator to resume emulation. Necessary for any lua script while loop or else the emulator will freeze!"
 		)]
@@ -242,7 +278,7 @@ namespace BizHawk.Client.Common
 			try
 			{
 				m_dbConnection.Open();
-				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where done =0 or done =2;";
+				string sql = "PRAGMA read_uncommitted =1;Select * from rewards where done =0 or done =2 or done=3;";
 				SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
 				SQLiteDataReader reader = command.ExecuteReader();
 				//Console.WriteLine(reader.HasRows);
